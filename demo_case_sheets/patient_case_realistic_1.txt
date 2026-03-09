@@ -1,0 +1,39 @@
+GENERAL MEDICINE CONSULTATION REPORT
+
+Patient Name: Arjun Mehta
+Age: 52
+Gender: Male
+
+Chief Complaint:
+The patient reports persistent fatigue, increased thirst, and frequent urination over the past two weeks. Mild numbness in the feet noted.
+
+Medical History:
+Known case of type 2 diabetes mellitus for 8 years. History of hypertension. No prior cardiac events documented.
+
+Vital Signs:
+Blood Pressure: 150/95 mmHg
+Heart Rate: 88 bpm
+Temperature: 37.1 C
+
+Laboratory Investigations:
+HbA1c: 8.2 %
+Fasting Blood Glucose: 176 mg/dL
+Serum Creatinine: 1.4 mg/dL
+Total Cholesterol: 218 mg/dL
+LDL Cholesterol: 142 mg/dL
+Blood Urea Nitrogen: 22 mg/dL
+
+Diagnosis:
+Type 2 Diabetes, Hypertension, Early Diabetic Nephropathy
+
+Clinical Assessment:
+Laboratory findings indicate poorly controlled diabetes with elevated HbA1c levels. Blood pressure remains above normal range. Mild elevation of creatinine suggests early renal stress consistent with early diabetic nephropathy.
+
+Current Medications:
+Metformin 1000mg twice daily
+Glipizide 5mg once daily
+Atorvastatin 20mg once daily
+Lisinopril 10mg once daily
+
+Doctor Notes:
+Patient advised strict glycemic control, dietary modification, and increased physical activity. Follow-up HbA1c testing recommended after 3 months. Nephrology referral considered if creatinine continues to rise.

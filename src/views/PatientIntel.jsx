@@ -93,7 +93,7 @@ export default function PatientIntel({ patient }) {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr", gap: "24px" }}>
                 {/* Column 1: Body Map */}
                 <GlassPanel title="Clinical Body Map" style={{ height: "460px" }}>
-                    <BodyMap />
+                    <BodyMap diagnoses={patient.diagnosis} />
                 </GlassPanel>
 
                 {/* Column 2: Lab Trends */}
