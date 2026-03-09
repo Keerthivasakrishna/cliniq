@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { T } from "../tokens";
-import { PATIENTS } from "../mockData";
 import GlassPanel from "../components/GlassPanel";
 import BodyMap from "../components/BodyMap";
 import {
@@ -19,8 +18,7 @@ import {
     FiMessageSquare
 } from "react-icons/fi";
 
-export default function PatientIntel() {
-    const patient = PATIENTS[0]; // Use the first detailed mock patient
+export default function PatientIntel({ patient }) {
     const [chartTab, setChartTab] = useState("HbA1c");
 
     const riskColor =

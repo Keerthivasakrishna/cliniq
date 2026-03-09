@@ -1,36 +1,50 @@
-import GlassPanel from "../components/GlassPanel";
-import BodyMap from "../components/BodyMap";
-import PatientCard from "../components/PatientCard";
+import { useState } from "react";
 import { PATIENTS } from "../mockData";
-export default function Overview() {
+import PatientCard from "../components/PatientCard";
+import GlassPanel from "../components/GlassPanel";
+import { T } from "../tokens";
+
+export default function Overview({ setActivePatient, goToPatient }) {
+    const [search, setSearch] = useState("");
+
+    const filteredPatients = PATIENTS.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
-        <div
-            style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "20px"
-            }}
-        >
-            <GlassPanel title="Active Patients">
-                <h2>2</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* Search + Add Patient */}
+            <GlassPanel>
+                <div style={{ display: "flex", gap: "10px" }}>
+                    <input
+                        placeholder="Search patient..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        style={{
+                            flex: 1,
+                            padding: "10px",
+                            border: `1px solid ${T.border}`,
+                            borderRadius: "8px"
+                        }}
+                    />
+
+                    <button
+                        style={{
+                            background: T.primary,
+                            color: "white",
+                            border: "none",
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            cursor: "pointer"
+                        }}
+                    >
+                        + Add Patient
+                    </button>
+                </div>
             </GlassPanel>
 
-            <GlassPanel title="Critical Alerts">
-                <h2>3</h2>
-            </GlassPanel>
-
-            <GlassPanel title="Pill Scans Today">
-                <h2>4</h2>
-            </GlassPanel>
-
-            <GlassPanel title="Average Adherence">
-                <h2>74%</h2>
-            </GlassPanel>
-
-            <GlassPanel title="Clinical Body Map">
-                <BodyMap />
-            </GlassPanel>
-
+            {/* Patient List */}
             <GlassPanel title="Patients">
                 <div
                     style={{
@@ -39,9 +53,33 @@ export default function Overview() {
                         gap: "16px"
                     }}
                 >
-                    {PATIENTS.map((p) => (
-                        <PatientCard key={p.id} patient={p} />
+                    {filteredPatients.map((p) => (
+                        <div
+                            key={p.id}
+                            onClick={() => {
+                                setActivePatient(p);
+                                goToPatient();
+                            }}
+                            style={{ cursor: "pointer" }}
+                        >
+                            <PatientCard patient={p} />
+                        </div>
                     ))}
+                </div>
+            </GlassPanel>
+
+            {/* Critical Alerts */}
+            <GlassPanel title="Critical Alerts">
+                <div style={{ color: T.danger }}>
+                    ⚠ Worsening HbA1c detected
+                </div>
+
+                <div style={{ color: T.warning }}>
+                    ⚠ Rising creatinine levels
+                </div>
+
+                <div style={{ color: T.danger }}>
+                    ⚠ Consecutive elevated BP readings
                 </div>
             </GlassPanel>
         </div>
