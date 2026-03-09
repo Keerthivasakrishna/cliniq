@@ -84,13 +84,6 @@ async def extract_patient(file: UploadFile = File(...)):
     # Run the 4-step agent pipeline
     result = agent.run(text)
 
-    # Store in RAG for future NL queries (key by patient name + random id)
-    patient_id = f"{result.get('name', 'unknown').replace(' ', '_')}_{id(text) % 9999}"
-    rag_engine.add_document(patient_id, text)
-
-    # Strip internal agent metadata before returning to frontend
-    result.pop("_agentMeta", None)
-
     return result
 
 

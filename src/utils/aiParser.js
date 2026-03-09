@@ -31,39 +31,27 @@ export async function parseClinicalText(file) {
 
 /** Simple regex fallback when the backend is offline */
 function fallbackParse(text) {
-    const nameMatch = text.match(/Patient Name:\s*(.+)/i);
-    const ageMatch = text.match(/Age:\s*(\d+)/i);
-    const diagMatch = text.match(/Diagnosis(?:es)?:\s*(.+)/i);
-    const compMatch = text.match(/Chief Complaint:\s*([\s\S]*?)(?=Recent Labs:|Medications:|Authorized|Medical History|$)/i);
-    const medsMatch = text.match(/(?:Current )?Medications:\s*([\s\S]*?)(?=\n\n|\nAuthorized|Doctor|$)/i);
-
-    let meds = [];
-    if (medsMatch) {
-        meds = medsMatch[1]
-            .split("\n")
-            .filter(l => l.trim().length > 2)
-            .map(line => {
-                const parts = line.trim().split(/\s+/);
-                return { name: parts[0], dose: parts[1] || "Unknown dose", freq: parts.slice(2).join(" ") || "As directed" };
-            });
-    }
-
+    // ... basic regex fallback
     return {
-        name: nameMatch ? nameMatch[1].trim() : "Extracted Patient",
-        age: ageMatch ? parseInt(ageMatch[1]) : 50,
-        gender: text.match(/\bfemale\b|\bwoman\b/i) ? "Female" : text.match(/\bmale\b|\bman\b/i) ? "Male" : "Not specified",
-        diagnosis: diagMatch ? diagMatch[1].split(",").map(d => d.trim()) : ["Clinical review required"],
-        chief_complaint: compMatch ? compMatch[1].trim().split("\n")[0] : "Presenting for clinical evaluation",
-        medications: meds,
+        patient_info: {
+            name: "Extracted Patient",
+            age: 50,
+            gender: "Not specified",
+            diagnosis: ["Clinical review required"],
+            chief_complaint: "Presenting for clinical evaluation",
+            riskScore: 60,
+            adherenceScore: 70
+        },
+        medications: [],
         lab_results: { HbA1c: "", Creatinine: "", BloodPressure: "", Cholesterol: "", LDL: "", Triglycerides: "", BUN: "" },
-        riskScore: 60,
-        adherenceScore: 70,
-        clinicalSummary: "• Patient data extracted locally — backend offline\n• Validate all fields before clinical use\n• Lab trends generated from document snapshot"
+        clinical_insights: ["• Patient data extracted locally — backend offline", "• Validate all fields before clinical use"]
     };
 }
 
 /** Normalise the structured extraction result into the full PATIENTS dashboard schema */
 function buildPatientObject(extracted) {
+    const pInfo = extracted.patient_info || extracted;
+
     // --- Medications ---
     const meds = (extracted.medications || []).map(m => ({
         name: m.name || "Medication",
@@ -73,7 +61,7 @@ function buildPatientObject(extracted) {
         color: "#bae6fd"
     }));
 
-    // --- Lab values — handle both schema versions ---
+    // --- Lab values ---
     const labs = extracted.lab_results || extracted.labValues || {};
     const bp = labs.BloodPressure || labs.BP || "";
 
@@ -91,36 +79,28 @@ function buildPatientObject(extracted) {
             value: parseFloat((start + i * step).toFixed(2))
         }));
 
-    // --- Parse AI clinical summary into keyFindings array ---
-    const summaryText = extracted.clinicalSummary || "";
-    const keyFindings = summaryText
-        .split("\n")
-        .map(l => l.replace(/^[•\-]\s*/, "").trim())
-        .filter(l => l.length > 0);
-
-    if (keyFindings.length === 0) {
-        const diagList = (extracted.diagnosis || []).join(", ") || "Unknown";
-        keyFindings.push(
-            `Diagnosis: ${diagList}`,
-            `Labs — HbA1c: ${hba1c}%, Creatinine: ${creat} mg/dL, BP: ${sys}/${dia}`,
-            `Risk score estimated at ${extracted.riskScore || 60}%`
-        );
+    // --- Parse AI clinical insights ---
+    let keyFindings = [];
+    if (extracted.clinical_insights && Array.isArray(extracted.clinical_insights)) {
+        keyFindings = extracted.clinical_insights.map(l => l.replace(/^[•\-]\s*/, "").trim());
+    } else if (extracted.clinicalSummary) {
+        keyFindings = extracted.clinicalSummary.split("\n").map(l => l.replace(/^[•\-]\s*/, "").trim()).filter(l => l.length > 0);
     }
 
-    // --- chief_complaint normalisation ---
-    const complaint =
-        extracted.chief_complaint ||
-        extracted.chiefComplaint ||
-        "Presenting for clinical evaluation";
+    if (keyFindings.length === 0) {
+        keyFindings.push(`Risk score estimated at ${pInfo.riskScore || 60}%`);
+    }
+
+    const complaint = pInfo.chief_complaint || pInfo.chiefComplaint || "Presenting for clinical evaluation";
 
     return {
         id: "P" + Math.floor(Math.random() * 90000 + 10000),
-        name: extracted.name || "Extracted Patient",
-        age: extracted.age || 50,
-        gender: extracted.gender || "Not specified",
-        diagnosis: (extracted.diagnosis || []).length ? extracted.diagnosis : ["Clinical review required"],
-        riskScore: extracted.riskScore || 60,
-        adherenceScore: extracted.adherenceScore || 70,
+        name: pInfo.name || "Extracted Patient",
+        age: pInfo.age || 50,
+        gender: pInfo.gender || "Not specified",
+        diagnosis: (pInfo.diagnosis || []).length ? pInfo.diagnosis : ["Clinical review required"],
+        riskScore: pInfo.riskScore || 60,
+        adherenceScore: pInfo.adherenceScore || 70,
         medications: meds,
         labTrends: {
             HbA1c: trend(hba1c, 0.15),

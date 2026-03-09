@@ -12,7 +12,7 @@ import re
 from typing import Any
 
 import google.generativeai as genai
-
+from rag_engine import rag_engine
 
 # ---------------------------------------------------------------------------
 # Reference ranges for common labs
@@ -27,35 +27,6 @@ LAB_REFERENCES = {
     "Hemoglobin": {"min": 12,  "max": 99,   "unit": "g/dL", "organ": None},
     "CRP":        {"min": 0,   "max": 3.0,  "unit": "mg/L", "organ": "heart"},
 }
-
-# Diagnosis keyword → organ mapping
-DIAGNOSIS_ORGAN_MAP = {
-    "diabetes":       "pancreas",
-    "glyc":           "pancreas",
-    "hba1c":          "pancreas",
-    "kidney":         "kidney",
-    "renal":          "kidney",
-    "nephro":         "kidney",
-    "creatinine":     "kidney",
-    "ckd":            "kidney",
-    "heart":          "heart",
-    "cardiac":        "heart",
-    "coronary":       "heart",
-    "cholesterol":    "heart",
-    "lipid":          "heart",
-    "hypertension":   "heart",
-    "blood pressure": "heart",
-    "lung":           "lungs",
-    "pulmon":         "lungs",
-    "asthma":         "lungs",
-    "copd":           "lungs",
-    "liver":          "liver",
-    "hepat":          "liver",
-    "arthritis":      "joints",
-    "rheumat":        "joints",
-    "joint":          "joints",
-}
-
 
 def _extract_json(text: str) -> dict:
     """Safely extract a JSON dict from Gemini's response."""
@@ -76,12 +47,10 @@ def _extract_json(text: str) -> dict:
             pass
     return {}
 
-
 def _regex_fallback(text: str, pattern: str, default: str) -> str:
     """Extract a string from document text via regex, or return default."""
     match = re.search(pattern, text, re.IGNORECASE)
     return match.group(1).strip() if match else default
-
 
 class ClinicalAgent:
     def __init__(self, model: Any):
@@ -96,29 +65,44 @@ class ClinicalAgent:
         print("[AGENT] Clinical pipeline started")
         print("=" * 55)
 
-        # Step 1
+        # Step 1: Extract structured patient data
         extracted = self._extract_patient_data(text)
 
-        # Step 2
+        # Step 2: Identify abnormal lab values
         lab_alerts = self._analyze_lab_values(extracted)
 
-        # Step 3
-        organs = self._detect_affected_organs(extracted, lab_alerts)
+        # Add document to RAG engine so we can retrieve from it
+        patient_id = f"{extracted.get('name', 'unknown').replace(' ', '_')}_{id(text) % 9999}"
+        rag_engine.add_document(patient_id, text)
 
-        # Step 4
-        summary = self._generate_clinical_summary(extracted, lab_alerts, organs)
+        # Step 3: Retrieve patient context using the RAG system
+        print("[AGENT] Step 3: Retrieving patient context using the RAG system...")
+        query = f"{extracted.get('chief_complaint', '')} {', '.join(extracted.get('diagnosis', []))}"
+        rag_context = rag_engine.build_context(query)
+
+        # Step 4: Generate clinical insights using Gemini
+        summary = self._generate_clinical_summary(extracted, lab_alerts, rag_context)
 
         print("[AGENT] Pipeline complete ✓\n")
-
-        # Merge everything back into the extracted dict
-        extracted["clinicalSummary"] = summary
-        extracted.setdefault("riskScore", self._estimate_risk(lab_alerts))
-        extracted.setdefault("adherenceScore", 70)
-        extracted["_agentMeta"] = {
-            "labAlerts": lab_alerts,
-            "affectedOrgans": list(organs),
+        
+        patient_info = {
+            "name": extracted.get("name"),
+            "age": extracted.get("age"),
+            "gender": extracted.get("gender"),
+            "chief_complaint": extracted.get("chief_complaint"),
+            "diagnosis": extracted.get("diagnosis"),
+            "riskScore": self._estimate_risk(lab_alerts),
+            "adherenceScore": 70
         }
-        return extracted
+        
+        insights = [line.strip() for line in summary.split("\n") if line.strip()]
+
+        return {
+            "patient_info": patient_info,
+            "lab_results": extracted.get("lab_results", {}),
+            "medications": extracted.get("medications", []),
+            "clinical_insights": insights
+        }
 
     # ------------------------------------------------------------------
     # Step 1 — Extract structured data
@@ -320,31 +304,7 @@ Clinical Document:
 
         return alerts
 
-    # ------------------------------------------------------------------
-    # Step 3 — Detect affected organs
-    # ------------------------------------------------------------------
 
-    def _detect_affected_organs(self, extracted: dict, lab_alerts: list[dict]) -> set[str]:
-        print("[AGENT] Step 3: Detecting affected organs from diagnoses and lab alerts...")
-
-        organs: set[str] = set()
-        all_text = " ".join(extracted.get("diagnosis", [])).lower()
-
-        # From diagnosis keywords
-        for keyword, organ in DIAGNOSIS_ORGAN_MAP.items():
-            if keyword in all_text:
-                organs.add(organ)
-
-        # From abnormal lab → organ mapping
-        for alert in lab_alerts:
-            if alert.get("organ"):
-                organs.add(alert["organ"])
-
-        if not organs:
-            organs.add("heart")  # Default fallback
-
-        print(f"[AGENT] Organs flagged: {list(organs)}")
-        return organs
 
     # ------------------------------------------------------------------
     # Step 4 — Generate AI clinical summary
