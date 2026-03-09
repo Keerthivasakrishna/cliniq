@@ -68,20 +68,6 @@ export default function Overview({ setActivePatient, goToPatient }) {
                 </div>
             </GlassPanel>
 
-            {/* Critical Alerts */}
-            <GlassPanel title="Critical Alerts">
-                <div style={{ color: T.danger }}>
-                    ⚠ Worsening HbA1c detected
-                </div>
-
-                <div style={{ color: T.warning }}>
-                    ⚠ Rising creatinine levels
-                </div>
-
-                <div style={{ color: T.danger }}>
-                    ⚠ Consecutive elevated BP readings
-                </div>
-            </GlassPanel>
         </div>
     );
 }
