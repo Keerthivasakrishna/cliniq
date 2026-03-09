@@ -1,0 +1,53 @@
+ADVANCED RENAL DIAGNOSTIC LAB
+Specialized Kidney Function Testing
+
+Patient Name: Sarah Connor
+Age: 52 Years
+Sex: Female
+Patient ID: LAB-5120
+
+Sample Collected At:
+City Hospital Diagnostic Unit
+
+Referring Physician:
+Dr. Amit Verma (MD Nephrology)
+
+Test Panel: Renal Function Assessment
+
+Investigation                     Result        Reference Range        Unit
+----------------------------------------------------------------------------
+Serum Creatinine                  1.8           0.6 - 1.2              mg/dL
+Blood Urea Nitrogen (BUN)         28            7 - 20                 mg/dL
+Estimated GFR                     58            > 90                   mL/min
+Potassium                         5.1           3.5 - 5.0              mmol/L
+Sodium                            138           136 - 146              mmol/L
+Uric Acid                         6.8           2.4 - 6.0              mg/dL
+Urinary Protein                   2+            Negative               -
+
+Clinical Interpretation:
+The elevated creatinine and BUN levels suggest reduced kidney function. Estimated GFR values at 58 mL/min indicate Stage 2 chronic kidney disease. Mild hyperkalemia and proteinuria are concerning findings that require close monitoring.
+
+Physician Observation:
+The patient reports mild swelling in the lower extremities and fatigue over the past two months. Blood pressure readings during the clinic visit were consistently elevated at 148/90 mmHg. Patient denies hematuria but reports foamy urine on occasion.
+
+Doctor's Assessment:
+Findings are suggestive of early-stage chronic kidney disease likely associated with long-standing hypertension. The presence of proteinuria suggests glomerular involvement.
+
+Current Medications:
+Losartan 50mg once daily
+Furosemide 20mg once daily
+Amlodipine 5mg once daily
+
+Recommendations:
+1. Strict blood pressure control targeted below 130/80 mmHg.
+2. Reduced sodium and protein intake in diet.
+3. Regular monitoring of renal function every 3 months.
+4. Ultrasound imaging of kidneys recommended.
+5. Nephrology follow-up in 4 weeks.
+
+Clinical Comments:
+Patient counseling regarding lifestyle modification and medication adherence was provided. Long-term dialysis planning to be considered if GFR continues to decline.
+
+Authorized By:
+Dr. Amit Verma
+Consultant Nephrologist

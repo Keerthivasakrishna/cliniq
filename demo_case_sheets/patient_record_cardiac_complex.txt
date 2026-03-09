@@ -1,0 +1,49 @@
+GLOBAL HEART DIAGNOSTIC CENTER
+Cardiac Risk Screening Laboratory
+
+Patient Name: Priya Nair
+Age: 45 Years
+Sex: Female
+Patient ID: LAB-3187
+
+Sample Collection Location:
+HealthCare Diagnostics, Kochi
+
+Referring Physician:
+Dr. Sanjay Kumar (MD Cardiology)
+
+Test Panel: Lipid Profile and Cardiac Risk Assessment
+
+Investigation                     Result        Reference Range        Unit
+----------------------------------------------------------------------------
+Total Cholesterol                 248           < 200                  mg/dL
+LDL Cholesterol                   165           < 100                  mg/dL
+HDL Cholesterol                   38            > 50                   mg/dL
+Triglycerides                     210           < 150                  mg/dL
+C-Reactive Protein                4.2           < 3.0                  mg/L
+Fasting Blood Glucose             98            70 - 100               mg/dL
+HbA1c                             5.9           < 5.7                  %
+
+Interpretation:
+The lipid profile indicates elevated LDL cholesterol and triglyceride levels. Reduced HDL cholesterol further increases cardiovascular risk. Elevated CRP may suggest systemic inflammation which is a known risk factor for acute cardiac events.
+
+Doctor's Clinical Notes:
+The patient has a family history of cardiovascular disease. During examination, mild exertional shortness of breath was reported. Blood pressure readings taken during the consultation were moderately elevated at 145/90 mmHg. Patient reports sedentary lifestyle and high dietary fat intake.
+
+Current Medications:
+Rosuvastatin 10mg once daily
+Aspirin 75mg once daily
+
+Physician Recommendations:
+1. Lifestyle modification including dietary fat restriction.
+2. Initiation of higher-intensity lipid-lowering therapy if values remain elevated.
+3. Regular monitoring of cholesterol levels every 3 months.
+4. Cardiovascular risk evaluation in follow-up visit.
+5. Blood pressure management and home monitoring advised.
+
+Comments:
+Early intervention is recommended to reduce long-term risk of coronary artery disease. Patient counseled on dietary changes and physical activity.
+
+Authorized By:
+Dr. Meera Pillai
+Consultant Cardiologist

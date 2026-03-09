@@ -1,0 +1,48 @@
+METRO CARE DIAGNOSTIC LAB
+Comprehensive Pathology & Clinical Diagnostics
+
+Patient Name: Arjun Mehta
+Age: 52 Years
+Sex: Male
+Patient ID: LAB-2048
+
+Sample Collected At:
+Apollo Health Centre, Bengaluru
+
+Referring Physician:
+Dr. Neha Kapoor (MD Internal Medicine)
+
+Test Panel: Diabetes Monitoring and Metabolic Profile
+
+Investigation                     Result        Reference Range        Unit
+----------------------------------------------------------------------------
+Fasting Blood Glucose             168           70 - 100               mg/dL
+Postprandial Glucose              232           < 140                  mg/dL
+HbA1c                             8.1           < 5.7                  %
+Serum Creatinine                  1.4           0.6 - 1.2              mg/dL
+Blood Urea Nitrogen (BUN)         24            7 - 20                 mg/dL
+Total Cholesterol                 215           < 200                  mg/dL
+
+Clinical Interpretation:
+The laboratory findings demonstrate persistent hyperglycemia. HbA1c values suggest that glycemic control has been suboptimal over the past three months. Elevated fasting glucose levels correlate with patient-reported symptoms of fatigue and polyuria.
+
+Physician Observation:
+During consultation, the patient reported increased thirst, occasional dizziness, and mild numbness in the feet. These symptoms are consistent with uncontrolled diabetes mellitus.
+
+Doctor's Recommendation:
+1. Intensification of diabetic management is recommended.
+2. Regular blood glucose monitoring should be continued.
+3. Dietary modification and exercise counseling advised.
+4. Follow-up testing for HbA1c in 3 months.
+
+Current Medications:
+Metformin 1000mg twice daily
+Glipizide 5mg once daily
+Atorvastatin 20mg once daily
+
+Additional Notes:
+Kidney function markers show mild elevation, which may indicate early diabetic nephropathy. Continued monitoring is advised.
+
+Authorized By:
+Dr. Ritesh Shah
+Consultant Endocrinologist
