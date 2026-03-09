@@ -49,7 +49,6 @@ export default function PatientIntel({ patient }) {
                                 key={i}
                                 style={{
                                     background: T.primarySoft,
-                                    color: T.primaryBorder, // Need softer text on primarySoft
                                     color: T.primary,
                                     padding: "4px 10px",
                                     borderRadius: "6px",
@@ -61,6 +60,23 @@ export default function PatientIntel({ patient }) {
                             </span>
                         ))}
                     </div>
+
+                    {/* NEW: Consult Brief details */}
+                    {patient.consultBrief && (
+                        <div style={{ marginTop: "16px", background: T.bgMain, padding: "12px", borderRadius: "8px", border: `1px solid ${T.border}` }}>
+                            <div style={{ fontSize: "14px", color: T.textPrimary, marginBottom: "8px" }}>
+                                <strong>Chief Complaint:</strong> {patient.consultBrief.complaint}
+                            </div>
+                            <div style={{ fontSize: "13px", color: T.textSecondary }}>
+                                <div style={{ marginBottom: "4px", fontWeight: "600" }}>Key Clinical Findings:</div>
+                                <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                                    {patient.consultBrief.keyFindings.map((finding, idx) => (
+                                        <li key={idx} style={{ marginBottom: "2px" }}>{finding}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ textAlign: "right" }}>
