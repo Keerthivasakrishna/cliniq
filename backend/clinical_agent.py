@@ -77,6 +77,12 @@ def _extract_json(text: str) -> dict:
     return {}
 
 
+def _regex_fallback(text: str, pattern: str, default: str) -> str:
+    """Extract a string from document text via regex, or return default."""
+    match = re.search(pattern, text, re.IGNORECASE)
+    return match.group(1).strip() if match else default
+
+
 class ClinicalAgent:
     def __init__(self, model: Any):
         self._model = model
@@ -121,56 +127,157 @@ class ClinicalAgent:
     def _extract_patient_data(self, text: str) -> dict:
         print("[AGENT] Step 1: Extracting structured patient data from document...")
 
-        prompt = f"""You are a medical data extraction assistant.
+        prompt = f"""You are a medical data extraction assistant. Your only job is to extract structured data.
 
-From the clinical document below, extract structured patient information.
+From the clinical document below, extract patient information and return ONLY valid JSON.
+No explanation, no markdown, no code fences — ONLY the JSON object.
 
-Return ONLY valid JSON in this exact format with no extra text or markdown:
+Use exactly this schema:
 
 {{
-  "name": "patient full name",
+  "name": "patient full name (string)",
   "age": 0,
   "gender": "Male or Female",
+  "chief_complaint": "main symptom or reason for visit (string)",
   "diagnosis": ["condition 1", "condition 2"],
-  "chiefComplaint": "main symptom or reason for visit",
   "medications": [
-    {{"name": "drug name", "dose": "amount", "freq": "how often"}}
+    {{"name": "drug name", "dose": "dosage amount", "freq": "how often"}}
   ],
-  "labValues": {{
-    "HbA1c": "value or empty string",
-    "Creatinine": "value or empty string",
-    "BP": "value or empty string",
-    "Cholesterol": "value or empty string",
-    "LDL": "value or empty string",
-    "Triglycerides": "value or empty string",
-    "BUN": "value or empty string"
+  "lab_results": {{
+    "HbA1c": "",
+    "Creatinine": "",
+    "BloodPressure": "",
+    "Cholesterol": "",
+    "LDL": "",
+    "Triglycerides": "",
+    "BUN": ""
   }},
   "riskScore": 60,
   "adherenceScore": 75
 }}
 
-Rules:
-- ALL fields are required. Never use null or undefined.
-- riskScore: 0-100 based on condition severity.
-- adherenceScore: 0-100 derived from medication compliance clues.
+Rules (strictly follow these):
+- Every field is REQUIRED. Never omit any field.
+- For numeric fields (age, riskScore, adherenceScore) return actual numbers, not strings.
+- For lab_results: if a value is not in the document return an empty string "".
+- Never return null, undefined, "unknown", "not specified", or "N/A".
+- riskScore 0-100: estimate from clinical severity (multiple abnormal labs = higher).
+- adherenceScore 0-100: derive from medication compliance clues in the text.
+- chief_complaint must be a complete sentence describing the patient's presenting problem.
 
 Clinical Document:
 {text}"""
 
         response = self._model.generate_content(prompt)
-        extracted = _extract_json(response.text)
 
-        # Apply sensible defaults
-        extracted.setdefault("name", "Unknown Patient")
-        extracted.setdefault("age", 50)
-        extracted.setdefault("gender", "Unknown")
-        extracted.setdefault("diagnosis", [])
-        extracted.setdefault("chiefComplaint", "Presenting for clinical evaluation")
-        extracted.setdefault("medications", [])
-        extracted.setdefault("labValues", {})
+        # --- RAW RESPONSE LOGGING ---
+        raw_text = response.text
+        print(f"[AGENT] Raw Gemini response ({len(raw_text)} chars):")
+        print("-" * 40)
+        print(raw_text[:800] + ("..." if len(raw_text) > 800 else ""))
+        print("-" * 40)
 
-        print(f"[AGENT] Extracted: {extracted.get('name')}, age {extracted.get('age')}, "
-              f"diagnoses: {extracted.get('diagnosis')}")
+        extracted = _extract_json(raw_text)
+
+        if not extracted:
+            print("[AGENT] WARNING: JSON extraction failed — using full fallback defaults")
+
+        # ------------------------------------------------------------------
+        # Per-field validation and coercion
+        # ------------------------------------------------------------------
+
+        # name
+        name = extracted.get("name", "")
+        if not isinstance(name, str) or not name.strip() or name.lower() in ("unknown", "n/a", "not specified"):
+            name = _regex_fallback(text, r"Patient Name:\s*(.+)", "Extracted Patient")
+        extracted["name"] = name.strip()
+
+        # age
+        age = extracted.get("age", 0)
+        try:
+            age = int(str(age).split(".")[0])
+        except (ValueError, TypeError):
+            age_match = re.search(r"Age:\s*(\d+)", text, re.IGNORECASE)
+            age = int(age_match.group(1)) if age_match else 50
+        extracted["age"] = max(1, min(120, age))  # clamp to sane range
+
+        # gender
+        gender = extracted.get("gender", "")
+        if not isinstance(gender, str) or gender.strip().lower() in ("", "unknown", "n/a"):
+            # Infer from document text
+            if re.search(r"\bfemale\b|\bwoman\b|\bher\b", text, re.IGNORECASE):
+                gender = "Female"
+            elif re.search(r"\bmale\b|\bman\b|\bhis\b", text, re.IGNORECASE):
+                gender = "Male"
+            else:
+                gender = "Not specified"
+        extracted["gender"] = gender.strip()
+
+        # chief_complaint — normalise both snake_case and camelCase incoming fields
+        complaint = (
+            extracted.get("chief_complaint")
+            or extracted.get("chiefComplaint")
+            or ""
+        )
+        if not isinstance(complaint, str) or complaint.strip().lower() in ("", "not specified", "unknown", "n/a"):
+            m = re.search(r"Chief Complaint:\s*([\s\S]*?)(?=\n\n|\nMedical|$)", text, re.IGNORECASE)
+            complaint = m.group(1).strip().split("\n")[0] if m else "Presenting for clinical evaluation"
+        extracted["chief_complaint"] = complaint.strip()
+        extracted.pop("chiefComplaint", None)   # remove legacy key if present
+
+        # diagnosis
+        diag = extracted.get("diagnosis", [])
+        if not isinstance(diag, list) or len(diag) == 0:
+            m = re.search(r"Diagnosis(?:es)?:\s*(.+)", text, re.IGNORECASE)
+            diag = [d.strip() for d in m.group(1).split(",")] if m else ["Clinical review required"]
+        extracted["diagnosis"] = [str(d) for d in diag if str(d).strip().lower() not in ("unknown", "none", "")]
+
+        # medications
+        meds = extracted.get("medications", [])
+        if not isinstance(meds, list):
+            meds = []
+        cleaned_meds = []
+        for m in meds:
+            if isinstance(m, dict):
+                cleaned_meds.append({
+                    "name": str(m.get("name") or "Medication").strip(),
+                    "dose": str(m.get("dose") or "Unknown dose").strip(),
+                    "freq": str(m.get("freq") or m.get("frequency") or "As directed").strip(),
+                })
+        extracted["medications"] = cleaned_meds
+
+        # lab_results — normalise from both "lab_results" and "labValues"
+        lab_results = (
+            extracted.get("lab_results")
+            or extracted.get("labValues")
+            or {}
+        )
+        REQUIRED_LABS = ["HbA1c", "Creatinine", "BloodPressure", "Cholesterol", "LDL", "Triglycerides", "BUN"]
+        # Migrate BP alias
+        if "BP" in lab_results and "BloodPressure" not in lab_results:
+            lab_results["BloodPressure"] = lab_results.pop("BP")
+        for lab in REQUIRED_LABS:
+            val = lab_results.get(lab, "")
+            # Strip bad values
+            if str(val).strip().lower() in ("null", "none", "unknown", "n/a", "not specified", "undefined"):
+                val = ""
+            lab_results[lab] = str(val).strip()
+        extracted["lab_results"] = lab_results
+        extracted.pop("labValues", None)     # remove legacy key
+
+        # riskScore / adherenceScore — ensure integers in range
+        for score_key, default in [("riskScore", 60), ("adherenceScore", 70)]:
+            try:
+                val = int(float(str(extracted.get(score_key, default))))
+                extracted[score_key] = max(0, min(100, val))
+            except (ValueError, TypeError):
+                extracted[score_key] = default
+
+        print(f"[AGENT] Validated extraction: {extracted['name']}, "
+              f"age={extracted['age']}, diagnoses={extracted['diagnosis']}, "
+              f"meds={len(extracted['medications'])}, "
+              f"labs={[k for k,v in extracted['lab_results'].items() if v]}")
+
         return extracted
 
     # ------------------------------------------------------------------
