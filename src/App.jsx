@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Overview from "./views/Overview";
+import PatientIntel from "./views/PatientIntel";
 import { T } from "./tokens";
 
 function App() {
@@ -22,7 +23,7 @@ function App() {
       {/* Main Content */}
       <div style={{ flex: 1, padding: "40px" }}>
         {active === "overview" && <Overview />}
-        {active === "patient" && <h1>Patient Intel</h1>}
+        {active === "patient" && <PatientIntel />}
         {active === "pillguard" && <h1>Pill Guard</h1>}
         {active === "analytics" && <h1>Analytics</h1>}
         {active === "alerts" && <h1>Alerts</h1>}
