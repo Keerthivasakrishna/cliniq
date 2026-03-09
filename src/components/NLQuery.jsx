@@ -46,10 +46,10 @@ export default function NLQuery({ patient }) {
             setAnswer(data.answer);
             streamText(data.answer);
         } catch (err) {
-            // Graceful fallback to rule-based router
-            const fallback = localQueryRouter(query, patient);
-            setAnswer(fallback);
-            streamText(fallback);
+            // Backend unavailable — show actionable error rather than fake rule-based answer
+            const errMsg = "⚠ Could not reach the AI backend. Please ensure the backend server is running (uvicorn main:app --reload) and try again.";
+            setAnswer(errMsg);
+            setDisplayedAnswer(errMsg);
         } finally {
             setIsLoading(false);
         }
@@ -199,38 +199,3 @@ export default function NLQuery({ patient }) {
     );
 }
 
-/** Rule-based fallback when backend is offline */
-function localQueryRouter(q, patient) {
-    const lower = q.toLowerCase();
-
-    if (lower.includes("hba1c") || lower.includes("sugar") || lower.includes("glycemic")) {
-        const labs = patient.labTrends?.HbA1c;
-        if (!labs || labs.length === 0) return "No HbA1c data on record.";
-        const first = labs[0];
-        const last = labs[labs.length - 1];
-        return `${patient.name}'s HbA1c has trended from ${first.value}% (${first.date}) to ${last.value}% (${last.date}), indicating ${last.value > first.value ? "worsening" : "improving"} glycemic control.`;
-    }
-
-    if (lower.includes("creatinine") || lower.includes("kidney") || lower.includes("renal")) {
-        const labs = patient.labTrends?.Creatinine;
-        if (!labs || labs.length === 0) return "No creatinine data on record.";
-        const values = labs.map((l) => l.value).join(" → ");
-        return `Creatinine trend: ${values} mg/dL — ${labs[labs.length - 1].value > labs[0].value ? "rising, indicating increasing renal stress" : "stable"}.`;
-    }
-
-    if (lower.includes("bp") || lower.includes("blood pressure") || lower.includes("hypertension")) {
-        return "Blood pressure readings have been persistently elevated. Review antihypertensive regimen.";
-    }
-
-    if (lower.includes("medication") || lower.includes("drug") || lower.includes("prescription")) {
-        if (!patient.medications?.length) return "No medications recorded.";
-        return `${patient.name} is on: ${patient.medications.map((m) => `${m.name} ${m.dose}`).join(", ")}.`;
-    }
-
-    if (lower.includes("summarize") || lower.includes("summary") || lower.includes("concern")) {
-        const diag = patient.diagnosis?.join(", ") || "Unknown";
-        return `${patient.name} (age ${patient.age}) has a risk score of ${patient.riskScore}% with diagnoses: ${diag}. Key concerns include worsening lab trends and suboptimal medication adherence.`;
-    }
-
-    return "Try asking about HbA1c, creatinine, blood pressure, medications, or ask for a clinical summary.";
-}

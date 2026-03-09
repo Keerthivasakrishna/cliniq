@@ -84,28 +84,28 @@ async def nl_query(data: NLQueryRequest):
       3. Return clinical answer
     """
     print(f"\n[RAG] NL Query received: '{data.question[:80]}'")
-
     # Retrieve relevant context from the RAG store
     rag_context = rag_engine.build_context(data.question)
 
     patient_summary = json.dumps(data.patient, indent=2)
 
-    prompt = f"""You are a clinical AI assistant helping a doctor understand a patient's medical situation.
+    prompt = f"""You are a clinical AI assistant.
 
-{rag_context}
+Using the patient data below answer the doctor's question with evidence-based medical reasoning.
+Be concise (2-3 sentences). Reference specific lab values or diagnoses from the patient record where relevant.
+Do not speculate beyond the available data.
 
-Current Patient Data (structured):
+Patient Data:
 {patient_summary}
 
-Doctor's Question:
-{data.question}
+Doctor Question:
+{data.question}"""
 
-Provide a concise, evidence-based clinical answer in 2–3 sentences. Reference specific lab values and trends where relevant."""
-
+    print(f"[RAG] Processing NL query: '{data.question[:80]}'")
     response = gemini_model.generate_content(prompt)
-    print(f"[RAG] NL Query answered ({len(response.text)} chars)")
-
-    return {"answer": response.text.strip()}
+    answer = response.text.strip()
+    print(f"[RAG] Answer generated ({len(answer)} chars)")
+    return {"answer": answer}
 
 
 class SecondOpinionRequest(BaseModel):
