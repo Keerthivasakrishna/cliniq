@@ -6,6 +6,8 @@ import os
 import json
 import pdfplumber
 import io
+import pytesseract
+from PIL import Image
 
 from clinical_agent import ClinicalAgent
 from rag_engine import rag_engine
@@ -73,6 +75,9 @@ async def extract_patient(file: UploadFile = File(...)):
                 extracted = page.extract_text()
                 if extracted:
                     text += extracted + "\n"
+    elif file.filename.lower().endswith((".png", ".jpg", ".jpeg")):
+        image = Image.open(io.BytesIO(content))
+        text = pytesseract.image_to_string(image)
     else:
         text = content.decode("utf-8", errors="ignore")
 

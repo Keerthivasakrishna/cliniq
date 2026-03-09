@@ -7,4 +7,6 @@ python-dotenv
 scikit-learn
 pdfplumber
 python-multipart
+pytesseract
+Pillow
 numpy

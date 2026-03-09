@@ -94,10 +94,10 @@ export default function Overview({ patients, setPatients, setActivePatient, goTo
                                 <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>⟳</span>
                                 Gemini Extracting...
                             </>
-                        ) : "⬆ Upload Case Sheet (.txt, .pdf)"}
+                        ) : "⬆ Upload Case Sheet (.txt, .pdf, .img)"}
                         <input
                             type="file"
-                            accept=".txt,.pdf"
+                            accept=".txt,.pdf,.png,.jpg,.jpeg"
                             style={{ display: "none" }}
                             onChange={handleFileUpload}
                             disabled={isUploading}
