@@ -38,9 +38,9 @@ export default function Sidebar({ active, setActive }) {
                                 cursor: "pointer",
                                 borderRadius: "8px",
                                 background:
-                                    active === item.id ? T.tealDim : "transparent",
+                                    active === item.id ? T.primarySoft : "transparent",
                                 color:
-                                    active === item.id ? T.teal : T.textSecondary
+                                    active === item.id ? T.primary : T.textSecondary
                             }}
                         >
                             {item.icon} {item.label}

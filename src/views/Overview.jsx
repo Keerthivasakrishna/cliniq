@@ -1,5 +1,5 @@
 import GlassPanel from "../components/GlassPanel";
-
+import BodyMap from "../components/BodyMap";
 export default function Overview() {
     return (
         <div
@@ -23,6 +23,10 @@ export default function Overview() {
 
             <GlassPanel title="Average Adherence">
                 <h2>74%</h2>
+            </GlassPanel>
+
+            <GlassPanel title="Clinical Body Map">
+                <BodyMap />
             </GlassPanel>
         </div>
     );

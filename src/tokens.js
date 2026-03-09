@@ -1,12 +1,27 @@
 export const T = {
-    bgDeep: "#0a0c10",
-    bgSidebar: "#11151c",
-    teal: "#00d2ff",
-    tealDim: "rgba(0, 210, 255, 0.15)",
-    textPrimary: "#e6edf3",
-    textSecondary: "#8b949e",
-    textMuted: "#484f58",
-    bgPanel: "rgba(17, 21, 28, 0.75)",
-    borderSubtle: "rgba(255, 255, 255, 0.05)",
-    fontDisplay: "'-apple-system', 'Segoe UI', sans-serif"
+    // Backgrounds
+    bgMain: "#F7FAF9",          // main page background (very light green/white)
+    bgSidebar: "#FFFFFF",
+    bgCard: "#FFFFFF",
+
+    // Primary medical green palette
+    primary: "#22C55E",        // main green
+    primarySoft: "#DCFCE7",    // light green highlight
+    primaryBorder: "#BBF7D0",
+
+    // Status colors
+    success: "#16A34A",
+    warning: "#F59E0B",
+    danger: "#EF4444",
+
+    // Text colors
+    textPrimary: "#111827",
+    textSecondary: "#4B5563",
+    textMuted: "#9CA3AF",
+
+    // Borders
+    border: "#E5E7EB",
+
+    // Fonts
+    fontDisplay: "'Inter', sans-serif",
 };

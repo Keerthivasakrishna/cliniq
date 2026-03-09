@@ -4,13 +4,11 @@ export default function GlassPanel({ title, children, style = {} }) {
     return (
         <div
             style={{
-                background: T.bgPanel,
-                border: `1px solid ${T.borderSubtle}`,
-                borderRadius: "16px",
-                backdropFilter: "blur(16px)",
-                WebkitBackdropFilter: "blur(16px)",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+                background: T.bgCard,
+                border: `1px solid ${T.border}`,
+                borderRadius: "12px",
                 padding: "20px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
                 ...style
             }}
         >
@@ -18,10 +16,10 @@ export default function GlassPanel({ title, children, style = {} }) {
                 <div
                     style={{
                         fontSize: "12px",
-                        letterSpacing: "0.1em",
-                        color: T.teal,
-                        marginBottom: "12px",
-                        textTransform: "uppercase"
+                        color: T.textSecondary,
+                        marginBottom: "10px",
+                        fontWeight: "600",
+                        letterSpacing: "0.04em"
                     }}
                 >
                     {title}

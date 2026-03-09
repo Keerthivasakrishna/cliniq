@@ -10,7 +10,7 @@ function App() {
     <div
       style={{
         display: "flex",
-        background: T.bgDeep,
+        background: T.bgMain,
         minHeight: "100vh",
         color: T.textPrimary,
         fontFamily: T.fontDisplay
