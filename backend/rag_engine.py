@@ -1,43 +1,54 @@
 """
-RAG Engine — In-memory retrieval using TF-IDF + cosine similarity.
-No external vector DB required. Perfect for hackathon use.
+RAG Engine — Vector retrieval using Gemini Embeddings (text-embedding-004)
+and in-memory cosine similarity.
 """
 
 import math
-import re
-from collections import defaultdict
-
+import google.generativeai as genai
 
 class RAGEngine:
     def __init__(self):
-        # Store: {doc_id: raw_text}
-        self._documents: dict[str, str] = {}
-        # TF-IDF cache: {doc_id: {term: tfidf_score}}
-        self._tfidf: dict[str, dict[str, float]] = {}
+        # Store individual chunks: list of dict {"patient_id": str, "text": str, "embedding": list[float]}
+        self._chunks = []
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
     def add_document(self, patient_id: str, text: str) -> None:
-        """Store a document (case sheet text) under the given patient ID."""
-        self._documents[patient_id] = text
-        self._rebuild_tfidf()
-        print(f"[RAG] Stored document for patient_id='{patient_id}' "
-              f"({len(self._documents)} total documents in store)")
+        """Chunk a document, get Gemini embeddings, and store them in memory."""
+        chunks = self._chunk_text(text)
+        count = 0
+        for i, chunk in enumerate(chunks):
+            embed = self._get_embedding(chunk, task_type="retrieval_document")
+            if embed:
+                self._chunks.append({
+                    "patient_id": patient_id,
+                    "text": chunk,
+                    "embedding": embed
+                })
+                count += 1
+        print(f"[RAG] Embedded and stored {count} chunks for patient_id='{patient_id}'")
 
-    def retrieve(self, question: str, top_k: int = 2) -> list[str]:
-        """Return the top-k most relevant document texts for the query."""
-        if not self._documents:
+    def retrieve(self, question: str, top_k: int = 3) -> list[str]:
+        """Return the top-k most relevant document texts for the query using cosine similarity."""
+        if not self._chunks:
             return []
 
-        query_vec = self._tfidf_vector(self._tokenize(question))
-        scores = {}
-        for doc_id, doc_vec in self._tfidf.items():
-            scores[doc_id] = self._cosine(query_vec, doc_vec)
+        query_vec = self._get_embedding(question, task_type="retrieval_query")
+        if not query_vec:
+            return []
 
-        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        results = [self._documents[doc_id] for doc_id, _ in ranked[:top_k] if scores[doc_id] > 0]
+        scores = []
+        for item in self._chunks:
+            doc_vec = item["embedding"]
+            sim = self._cosine(query_vec, doc_vec)
+            scores.append((sim, item["text"]))
+
+        # Sort by highest similarity
+        ranked = sorted(scores, key=lambda x: x[0], reverse=True)
+        # Filter loosely (e.g. > 0.3) to grab good matches
+        results = [text for sim, text in ranked[:top_k] if sim > 0.3]
         print(f"[RAG] Retrieved {len(results)} relevant context chunk(s) for query: '{question[:60]}...'")
         return results
 
@@ -45,55 +56,43 @@ class RAGEngine:
         """Format retrieved chunks into a prompt-ready context string."""
         chunks = self.retrieve(question)
         if not chunks:
-            return "(No patient history available in store)"
-        sections = "\n---\n".join(f"[Record]\n{chunk}" for chunk in chunks)
-        return f"Relevant patient records retrieved from clinical history:\n\n{sections}"
+            return "(No additional relevant history excerpts retrieved)"
+        sections = "\n---\n".join(f"[Excerpt]\n{chunk}" for chunk in chunks)
+        return f"Retrieved Context from Patient History:\n\n{sections}"
 
     # ------------------------------------------------------------------
-    # Internal TF-IDF helpers
+    # Internal Helpers
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _tokenize(text: str) -> list[str]:
-        return re.findall(r"[a-z0-9]+", text.lower())
-
-    def _rebuild_tfidf(self) -> None:
-        """Recompute TF-IDF for all stored documents."""
-        corpus = {doc_id: self._tokenize(text) for doc_id, text in self._documents.items()}
-        N = len(corpus)
-
-        # Document frequencies
-        df: dict[str, int] = defaultdict(int)
-        for tokens in corpus.values():
-            for term in set(tokens):
-                df[term] += 1
-
-        # Compute TF-IDF per document
-        self._tfidf = {}
-        for doc_id, tokens in corpus.items():
-            tf: dict[str, float] = defaultdict(float)
-            for term in tokens:
-                tf[term] += 1
-            total = len(tokens) or 1
-            vec = {}
-            for term, count in tf.items():
-                tfidf = (count / total) * math.log((N + 1) / (df[term] + 1))
-                vec[term] = tfidf
-            self._tfidf[doc_id] = vec
-
-    def _tfidf_vector(self, tokens: list[str]) -> dict[str, float]:
-        """Build a simple TF vector for a query (no IDF reweighting needed)."""
-        vec: dict[str, float] = defaultdict(float)
-        total = len(tokens) or 1
-        for t in tokens:
-            vec[t] += 1 / total
-        return dict(vec)
+    def _chunk_text(text: str, chunk_size: int = 200, overlap: int = 50) -> list[str]:
+        """Simple word-based chunking."""
+        words = text.split()
+        chunks = []
+        for i in range(0, len(words), chunk_size - overlap):
+            chunk = " ".join(words[i:i + chunk_size])
+            if chunk.strip():
+                chunks.append(chunk)
+        return chunks
 
     @staticmethod
-    def _cosine(a: dict, b: dict) -> float:
-        dot = sum(a.get(k, 0) * b.get(k, 0) for k in a)
-        mag_a = math.sqrt(sum(v * v for v in a.values()))
-        mag_b = math.sqrt(sum(v * v for v in b.values()))
+    def _get_embedding(text: str, task_type: str = "retrieval_document") -> list[float]:
+        try:
+            result = genai.embed_content(
+                model="models/text-embedding-004",
+                content=text,
+                task_type=task_type
+            )
+            return result['embedding']
+        except Exception as e:
+            print(f"[RAG] Embedding failed: {e}")
+            return []
+
+    @staticmethod
+    def _cosine(a: list[float], b: list[float]) -> float:
+        dot = sum(x * y for x, y in zip(a, b))
+        mag_a = math.sqrt(sum(x * x for x in a))
+        mag_b = math.sqrt(sum(y * y for y in b))
         if mag_a == 0 or mag_b == 0:
             return 0.0
         return dot / (mag_a * mag_b)

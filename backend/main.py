@@ -110,11 +110,13 @@ async def nl_query(data: NLQueryRequest):
 
     prompt = f"""You are a clinical AI assistant.
 
-Using the patient data below answer the doctor's question with evidence-based medical reasoning.
-Be concise (2-3 sentences). Reference specific lab values or diagnoses from the patient record where relevant.
+Using the patient data and retrieved history below, answer the doctor's question with evidence-based medical reasoning.
+Be concise (2-3 sentences). Reference specific lab values or history where relevant.
 Do not speculate beyond the available data.
 
-Patient Data:
+{rag_context}
+
+Patient Data (Structured):
 {patient_summary}
 
 Doctor Question:
