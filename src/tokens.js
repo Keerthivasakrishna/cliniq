@@ -7,5 +7,6 @@ export const T = {
     textSecondary: "#8b949e",
     textMuted: "#484f58",
     bgPanel: "rgba(17, 21, 28, 0.75)",
-    borderSubtle: "rgba(255, 255, 255, 0.05)"
+    borderSubtle: "rgba(255, 255, 255, 0.05)",
+    fontDisplay: "'-apple-system', 'Segoe UI', sans-serif"
 };
