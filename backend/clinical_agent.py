@@ -362,19 +362,25 @@ Clinical Document:
 
         organ_text = ", ".join(organs) if organs else "none identified"
 
-        prompt = f"""You are a clinical AI assistant summarizing a patient's medical condition for a physician.
+        prompt = f"""You are a clinical assistant.
 
-Patient: {extracted.get('name')}, age {extracted.get('age')}, {extracted.get('gender')}
+Patient Data:
+Name: {extracted.get('name')}, Age: {extracted.get('age')}, Gender: {extracted.get('gender')}
 Diagnoses: {', '.join(extracted.get('diagnosis', []))}
-Chief Complaint: {extracted.get('chiefComplaint')}
+Chief Complaint: {extracted.get('chief_complaint', extracted.get('chiefComplaint', ''))}
 
 Abnormal Lab Values:
 {alert_text}
 
-Affected Organ Systems: {organ_text}
+Analyze the patient data and identify:
 
-Write exactly 3 concise bullet points (starting with •) summarizing the key clinical concerns.
-Reference specific lab values. Keep each point under 20 words. Be medically precise."""
+1. Key abnormal findings
+2. Possible medical risks
+3. Organs potentially affected
+4. Recommended follow-up tests
+
+Return concise bullet points."""
+
 
         response = self._model.generate_content(prompt)
         summary = response.text.strip()
