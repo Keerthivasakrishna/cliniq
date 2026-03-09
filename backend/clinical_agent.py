@@ -311,7 +311,7 @@ Clinical Document:
     # ------------------------------------------------------------------
 
     def _generate_clinical_summary(
-        self, extracted: dict, lab_alerts: list[dict], organs: set[str]
+        self, extracted: dict, lab_alerts: list[dict], rag_context: str
     ) -> str:
         print("[AGENT] Step 4: Generating AI clinical summary via Gemini...")
 
@@ -319,8 +319,6 @@ Clinical Document:
             f"- {a['lab']}: {a['value']} {a['unit']} ({a['status']}, ref {a['reference']})"
             for a in lab_alerts
         ) or "No significant abnormalities."
-
-        organ_text = ", ".join(organs) if organs else "none identified"
 
         prompt = f"""You are a clinical assistant.
 
@@ -332,12 +330,14 @@ Chief Complaint: {extracted.get('chief_complaint', extracted.get('chiefComplaint
 Abnormal Lab Values:
 {alert_text}
 
-Analyze the patient data and identify:
+{rag_context}
 
-1. Key abnormal findings
-2. Possible medical risks
+Analyze this patient data and identify:
+
+1. Abnormal lab values
+2. Possible health risks
 3. Organs potentially affected
-4. Recommended follow-up tests
+4. Recommended follow-up tests.
 
 Return concise bullet points."""
 
