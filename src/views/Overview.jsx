@@ -20,10 +20,8 @@ export default function Overview({ patients, setPatients, setActivePatient, goTo
         setIsUploading(true);
         setExtractedIndicators(null);
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const text = e.target.result;
-            const newPatient = await parseClinicalText(text);
+        try {
+            const newPatient = await parseClinicalText(file);
 
             // Build extraction summary for the confirmation panel
             const labs = newPatient.labTrends;
@@ -44,14 +42,16 @@ export default function Overview({ patients, setPatients, setActivePatient, goTo
 
             setPatients((prev) => [...prev, newPatient]);
             setActivePatient(newPatient);
-            setIsUploading(false);
 
             // Auto-navigate after 2s so user can see the confirmation
             setTimeout(() => {
                 goToPatient();
             }, 2000);
-        };
-        reader.readAsText(file);
+        } catch (err) {
+            console.error("Upload failed", err);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     return (
@@ -94,10 +94,10 @@ export default function Overview({ patients, setPatients, setActivePatient, goTo
                                 <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>⟳</span>
                                 Gemini Extracting...
                             </>
-                        ) : "⬆ Upload Case Sheet (.txt)"}
+                        ) : "⬆ Upload Case Sheet (.txt, .pdf)"}
                         <input
                             type="file"
-                            accept=".txt"
+                            accept=".txt,.pdf"
                             style={{ display: "none" }}
                             onChange={handleFileUpload}
                             disabled={isUploading}

@@ -1,18 +1,20 @@
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 /**
- * Sends raw clinical text to the FastAPI/Gemini backend (ClinicalAgent pipeline).
+ * Sends a clinical document (TXT/PDF) to the FastAPI/Gemini backend (ClinicalAgent pipeline).
  * Handles both new snake_case schema (lab_results, chief_complaint) and legacy camelCase.
  * Returns a fully structured patient object ready for the dashboard.
  */
-export async function parseClinicalText(text) {
+export async function parseClinicalText(file) {
     let extracted = null;
 
     try {
+        const formData = new FormData();
+        formData.append("file", file);
+
         const response = await fetch(`${BACKEND_URL}/extract_patient`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text })
+            body: formData
         });
 
         if (!response.ok) throw new Error(`Backend error: ${response.status}`);
@@ -21,7 +23,7 @@ export async function parseClinicalText(text) {
         console.log("[aiParser] Backend extraction received:", extracted);
     } catch (err) {
         console.warn("[aiParser] Gemini extraction failed, using local fallback:", err.message);
-        extracted = fallbackParse(text);
+        extracted = fallbackParse("");
     }
 
     return buildPatientObject(extracted);

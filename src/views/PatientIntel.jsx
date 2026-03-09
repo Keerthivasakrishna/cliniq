@@ -193,11 +193,11 @@ export default function PatientIntel({ patient }) {
                 </table>
             </GlassPanel>
 
-            {/* ── Section 3: AI Clinical Insights ── */}
+            {/* ── Section 3: Clinical Alerts ── */}
             {insights.length > 0 && (
                 <GlassPanel>
                     <div style={{ fontSize: "11px", color: T.textSecondary, letterSpacing: "1px", marginBottom: "14px" }}>
-                        AI CLINICAL INSIGHTS
+                        CLINICAL ALERTS
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         {insights.map((finding, i) => (

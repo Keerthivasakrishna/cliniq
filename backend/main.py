@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import google.generativeai as genai
 import os
 import json
+import pdfplumber
+import io
 
 from clinical_agent import ClinicalAgent
 from rag_engine import rag_engine
@@ -52,9 +54,9 @@ class NLQueryRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 @app.post("/extract_patient")
-async def extract_patient(data: CaseSheet):
+async def extract_patient(file: UploadFile = File(...)):
     """
-    Runs the full ClinicalAgent pipeline:
+    Extracts text from uploaded PDF or TXT, then runs the full ClinicalAgent pipeline:
       1. Extract structured patient data
       2. Analyze lab abnormalities
       3. Detect affected organs
@@ -62,12 +64,24 @@ async def extract_patient(data: CaseSheet):
 
     Also stores the case sheet in the RAG engine for future NL queries.
     """
+    content = await file.read()
+    text = ""
+    
+    if file.filename.lower().endswith(".pdf"):
+        with pdfplumber.open(io.BytesIO(content)) as pdf:
+            for page in pdf.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text += extracted + "\n"
+    else:
+        text = content.decode("utf-8", errors="ignore")
+
     # Run the 4-step agent pipeline
-    result = agent.run(data.text)
+    result = agent.run(text)
 
     # Store in RAG for future NL queries (key by patient name + random id)
-    patient_id = f"{result.get('name', 'unknown').replace(' ', '_')}_{id(data.text) % 9999}"
-    rag_engine.add_document(patient_id, data.text)
+    patient_id = f"{result.get('name', 'unknown').replace(' ', '_')}_{id(text) % 9999}"
+    rag_engine.add_document(patient_id, text)
 
     # Strip internal agent metadata before returning to frontend
     result.pop("_agentMeta", None)
