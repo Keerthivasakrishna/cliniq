@@ -1,5 +1,7 @@
 import GlassPanel from "../components/GlassPanel";
 import BodyMap from "../components/BodyMap";
+import PatientCard from "../components/PatientCard";
+import { PATIENTS } from "../mockData";
 export default function Overview() {
     return (
         <div
@@ -27,6 +29,20 @@ export default function Overview() {
 
             <GlassPanel title="Clinical Body Map">
                 <BodyMap />
+            </GlassPanel>
+
+            <GlassPanel title="Patients">
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "16px"
+                    }}
+                >
+                    {PATIENTS.map((p) => (
+                        <PatientCard key={p.id} patient={p} />
+                    ))}
+                </div>
             </GlassPanel>
         </div>
     );
