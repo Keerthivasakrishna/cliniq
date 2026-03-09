@@ -2,6 +2,7 @@ import { useState } from "react";
 import { T } from "../tokens";
 import GlassPanel from "../components/GlassPanel";
 import BodyMap from "../components/BodyMap";
+import NLQuery from "../components/NLQuery";
 import {
     LineChart,
     Line,
@@ -213,25 +214,7 @@ export default function PatientIntel({ patient }) {
                 </GlassPanel>
 
                 {/* Natural Language Query */}
-                <GlassPanel
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "12px",
-                        background: `linear-gradient(135deg, ${T.primarySoft}, ${T.bgCard})`,
-                        cursor: "pointer"
-                    }}
-                >
-                    <div style={{ padding: "16px", background: "#fff", borderRadius: "50%", color: T.primary }}>
-                        <FiSearch size={24} />
-                    </div>
-                    <div style={{ fontWeight: "600", color: T.textPrimary }}>Natural Language Query</div>
-                    <div style={{ fontSize: "12px", color: T.textSecondary, textAlign: "center" }}>
-                        Ask AI about this patient's history
-                    </div>
-                </GlassPanel>
+                <NLQuery patient={patient} />
 
                 {/* Second Opinion Mode */}
                 <GlassPanel
