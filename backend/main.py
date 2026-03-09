@@ -74,6 +74,34 @@ Case Sheet:
     return parsed
 
 
+class NLQueryRequest(BaseModel):
+    question: str
+    patient: dict
+
+
+@app.post("/nl_query")
+async def nl_query(data: NLQueryRequest):
+    import json as _json
+    # Serialize patient to a clean string for the prompt
+    patient_summary = _json.dumps(data.patient, indent=2)
+
+    prompt = f"""You are a clinical AI assistant helping a doctor understand a patient's medical situation.
+
+Given the patient data below, answer the doctor's question with a concise, evidence-based clinical explanation.
+Limit your response to 2-3 sentences. Focus only on clinically relevant insights.
+
+Patient Data:
+{patient_summary}
+
+Doctor's Question:
+{data.question}
+
+Your Answer:"""
+
+    response = model.generate_content(prompt)
+    return {"answer": response.text.strip()}
+
+
 @app.get("/")
 def root():
     return {"status": "ClinIQ backend running", "version": "1.0"}
