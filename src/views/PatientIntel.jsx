@@ -1,241 +1,231 @@
-import { useState } from "react";
 import { T } from "../tokens";
 import GlassPanel from "../components/GlassPanel";
-import BodyMap from "../components/BodyMap";
 import NLQuery from "../components/NLQuery";
 import SecondOpinion from "../components/SecondOpinion";
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer
-} from "recharts";
-import {
-    FiAlertTriangle,
-    FiActivity,
-    FiSearch,
-    FiMessageSquare
-} from "react-icons/fi";
+
+// Lab reference ranges for status colouring
+const LAB_REFS = {
+    HbA1c: { min: 0, max: 6.5, unit: "%" },
+    Creatinine: { min: 0.6, max: 1.2, unit: "mg/dL" },
+    BloodPressure: { min: 0, max: 130, unit: "mmHg" },
+    Cholesterol: { min: 0, max: 200, unit: "mg/dL" },
+    LDL: { min: 0, max: 100, unit: "mg/dL" },
+    Triglycerides: { min: 0, max: 150, unit: "mg/dL" },
+    BUN: { min: 7, max: 20, unit: "mg/dL" },
+};
+
+function labStatus(key, rawVal) {
+    const ref = LAB_REFS[key];
+    if (!ref || !rawVal || String(rawVal).trim() === "") return "normal";
+    const num = parseFloat(String(rawVal).split("/")[0]);
+    if (isNaN(num)) return "normal";
+    if (num > ref.max) return "high";
+    if (num < ref.min) return "low";
+    return "normal";
+}
+
+const STATUS_STYLE = {
+    high: { color: "#EF4444", bg: "#FEF2F2", label: "HIGH" },
+    low: { color: "#F59E0B", bg: "#FFFBEB", label: "LOW" },
+    normal: { color: "#22C55E", bg: "#F0FDF4", label: "NORMAL" },
+};
 
 export default function PatientIntel({ patient }) {
-    const [chartTab, setChartTab] = useState("HbA1c");
-
-    const riskColor =
-        patient.riskScore > 60 ? T.danger : patient.riskScore > 40 ? T.warning : T.success;
+    // Prefer new snake_case field, fall back to camelCase
+    const labResults = patient.lab_results || patient.labValues || {};
+    const complaint = patient.consultBrief?.complaint
+        || patient.chief_complaint
+        || "Not recorded";
+    const insights = patient.consultBrief?.keyFindings || [];
+    const meds = patient.medications || [];
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Top Section: AI Pre-Consultation Brief */}
-            <GlassPanel
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center"
-                }}
-            >
-                <div>
-                    <div style={{ fontSize: "12px", color: T.textSecondary, marginBottom: "4px" }}>
-                        AI PRE-CONSULTATION BRIEF
-                    </div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: "12px" }}>
-                        <h2 style={{ fontSize: "28px", margin: 0 }}>{patient.name}</h2>
-                        <span style={{ color: T.textMuted }}>Age {patient.age}</span>
-                    </div>
-                    <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-                        {patient.diagnosis.map((d, i) => (
-                            <span
-                                key={i}
-                                style={{
-                                    background: T.primarySoft,
-                                    color: T.primary,
-                                    padding: "4px 10px",
-                                    borderRadius: "6px",
-                                    fontSize: "13px",
-                                    fontWeight: "500"
-                                }}
-                            >
-                                {d}
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* ── Section 1: Patient Overview ── */}
+            <GlassPanel>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                        <div style={{ fontSize: "11px", color: T.textSecondary, letterSpacing: "1px", marginBottom: "6px" }}>
+                            PATIENT OVERVIEW
+                        </div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: "12px" }}>
+                            <h2 style={{ fontSize: "26px", margin: 0, color: T.textPrimary }}>
+                                {patient.name}
+                            </h2>
+                            <span style={{ color: T.textMuted, fontSize: "15px" }}>
+                                {patient.age}y · {patient.gender || "—"}
                             </span>
-                        ))}
+                        </div>
+
+                        {/* Diagnoses */}
+                        <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
+                            {(patient.diagnosis || []).map((d, i) => (
+                                <span
+                                    key={i}
+                                    style={{
+                                        background: T.primarySoft,
+                                        color: T.primary,
+                                        padding: "3px 10px",
+                                        borderRadius: "4px",
+                                        fontSize: "13px",
+                                        fontWeight: "500",
+                                        border: `1px solid ${T.primaryBorder}`
+                                    }}
+                                >
+                                    {d}
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* Chief Complaint */}
+                        <div style={{
+                            marginTop: "12px",
+                            padding: "10px 14px",
+                            background: T.bgMain,
+                            borderRadius: "6px",
+                            border: `1px solid ${T.border}`,
+                            fontSize: "14px",
+                            color: T.textPrimary
+                        }}>
+                            <span style={{ color: T.textSecondary, fontWeight: "600" }}>Chief Complaint: </span>
+                            {complaint}
+                        </div>
                     </div>
 
-                    {/* NEW: Consult Brief details */}
-                    {patient.consultBrief && (
-                        <div style={{ marginTop: "16px", background: T.bgMain, padding: "12px", borderRadius: "8px", border: `1px solid ${T.border}` }}>
-                            <div style={{ fontSize: "14px", color: T.textPrimary, marginBottom: "8px" }}>
-                                <strong>Chief Complaint:</strong> {patient.consultBrief.complaint}
+                    {/* Medications summary sidebar */}
+                    {meds.length > 0 && (
+                        <div style={{
+                            minWidth: "200px",
+                            maxWidth: "260px",
+                            padding: "12px 16px",
+                            background: T.bgMain,
+                            borderRadius: "8px",
+                            border: `1px solid ${T.border}`
+                        }}>
+                            <div style={{ fontSize: "11px", color: T.textSecondary, letterSpacing: "1px", marginBottom: "8px" }}>
+                                ACTIVE MEDICATIONS
                             </div>
-                            <div style={{ fontSize: "13px", color: T.textSecondary }}>
-                                <div style={{ marginBottom: "4px", fontWeight: "600" }}>Key Clinical Findings:</div>
-                                <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                                    {patient.consultBrief.keyFindings.map((finding, idx) => (
-                                        <li key={idx} style={{ marginBottom: "2px" }}>{finding}</li>
-                                    ))}
-                                </ul>
-                            </div>
+                            {meds.map((m, i) => (
+                                <div key={i} style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    fontSize: "13px",
+                                    color: T.textPrimary,
+                                    padding: "4px 0",
+                                    borderBottom: i < meds.length - 1 ? `1px solid ${T.border}` : "none"
+                                }}>
+                                    <span style={{ fontWeight: "500" }}>{m.name}</span>
+                                    <span style={{ color: T.textSecondary }}>{m.dose}</span>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
-
-                <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "12px", color: T.textSecondary, marginBottom: "8px" }}>
-                        CLINICAL RISK SCORE
-                    </div>
-                    <div style={{ fontSize: "36px", fontWeight: "bold", color: riskColor }}>
-                        {patient.riskScore}%
-                    </div>
-                </div>
             </GlassPanel>
 
-            {/* 3-Column Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr", gap: "24px" }}>
-                {/* Column 1: Body Map */}
-                <GlassPanel title="Clinical Body Map" style={{ height: "460px" }}>
-                    <BodyMap diagnoses={patient.diagnosis} />
-                </GlassPanel>
+            {/* ── Section 2: Lab Results Table ── */}
+            <GlassPanel>
+                <div style={{ fontSize: "11px", color: T.textSecondary, letterSpacing: "1px", marginBottom: "14px" }}>
+                    EXTRACTED LAB RESULTS
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                    <thead>
+                        <tr style={{ borderBottom: `2px solid ${T.border}` }}>
+                            {["Investigation", "Result", "Reference Range", "Unit", "Status"].map(h => (
+                                <th key={h} style={{
+                                    textAlign: "left",
+                                    padding: "8px 12px",
+                                    color: T.textSecondary,
+                                    fontWeight: "600",
+                                    fontSize: "12px",
+                                    letterSpacing: "0.5px"
+                                }}>
+                                    {h.toUpperCase()}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {Object.entries(LAB_REFS).map(([key, ref]) => {
+                            const val = labResults[key];
+                            if (!val || String(val).trim() === "") return null;
+                            const status = labStatus(key, val);
+                            const s = STATUS_STYLE[status];
+                            return (
+                                <tr key={key} style={{ borderBottom: `1px solid ${T.border}` }}>
+                                    <td style={{ padding: "10px 12px", fontWeight: "500", color: T.textPrimary }}>
+                                        {key === "BloodPressure" ? "Blood Pressure" : key}
+                                    </td>
+                                    <td style={{ padding: "10px 12px", fontWeight: "700", color: s.color }}>
+                                        {val}
+                                    </td>
+                                    <td style={{ padding: "10px 12px", color: T.textSecondary }}>
+                                        {ref.min > 0 ? `${ref.min} – ${ref.max}` : `< ${ref.max}`}
+                                    </td>
+                                    <td style={{ padding: "10px 12px", color: T.textSecondary }}>
+                                        {ref.unit}
+                                    </td>
+                                    <td style={{ padding: "10px 12px" }}>
+                                        <span style={{
+                                            background: s.bg,
+                                            color: s.color,
+                                            padding: "2px 8px",
+                                            borderRadius: "4px",
+                                            fontSize: "11px",
+                                            fontWeight: "700",
+                                            letterSpacing: "0.5px"
+                                        }}>
+                                            {s.label}
+                                        </span>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        {Object.values(labResults).every(v => !v || !String(v).trim()) && (
+                            <tr>
+                                <td colSpan={5} style={{ padding: "16px 12px", color: T.textMuted, textAlign: "center" }}>
+                                    No lab values extracted from this record.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </GlassPanel>
 
-                {/* Column 2: Lab Trends */}
-                <GlassPanel title="Key Lab Trends" style={{ height: "460px", display: "flex", flexDirection: "column" }}>
-                    <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
-                        {["HbA1c", "Creatinine", "BP"].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setChartTab(tab)}
-                                style={{
-                                    background: chartTab === tab ? T.primarySoft : "transparent",
-                                    color: chartTab === tab ? T.primary : T.textSecondary,
-                                    border: `1px solid ${chartTab === tab ? T.primaryBorder : T.border}`,
-                                    padding: "8px 16px",
-                                    borderRadius: "8px",
-                                    cursor: "pointer",
-                                    fontWeight: "500",
-                                    transition: "all 0.2s"
-                                }}
-                            >
-                                {tab}
-                            </button>
-                        ))}
+            {/* ── Section 3: AI Clinical Insights ── */}
+            {insights.length > 0 && (
+                <GlassPanel>
+                    <div style={{ fontSize: "11px", color: T.textSecondary, letterSpacing: "1px", marginBottom: "14px" }}>
+                        AI CLINICAL INSIGHTS
                     </div>
-
-                    <div style={{ flex: 1, minHeight: 0 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            {chartTab !== "BP" ? (
-                                <LineChart data={patient.labTrends[chartTab]}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={T.border} vertical={false} />
-                                    <XAxis dataKey="date" stroke={T.textMuted} fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke={T.textMuted} fontSize={12} tickLine={false} axisLine={false} />
-                                    <Tooltip
-                                        contentStyle={{ background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: "8px", color: T.textPrimary }}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="value"
-                                        stroke={T.primary}
-                                        strokeWidth={3}
-                                        dot={{ fill: T.primary, r: 4 }}
-                                        activeDot={{ r: 6 }}
-                                    />
-                                </LineChart>
-                            ) : (
-                                <LineChart data={patient.labTrends.BP}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke={T.border} vertical={false} />
-                                    <XAxis dataKey="date" stroke={T.textMuted} fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke={T.textMuted} fontSize={12} tickLine={false} axisLine={false} />
-                                    <Tooltip
-                                        contentStyle={{ background: T.bgDeep, border: `1px solid ${T.border}`, borderRadius: "8px", color: T.textPrimary }}
-                                    />
-                                    <Line type="monotone" dataKey="systolic" stroke={T.danger} strokeWidth={2} name="Systolic" />
-                                    <Line type="monotone" dataKey="diastolic" stroke={T.warning} strokeWidth={2} name="Diastolic" />
-                                </LineChart>
-                            )}
-                        </ResponsiveContainer>
-                    </div>
-                </GlassPanel>
-
-                {/* Column 3: Medications */}
-                <GlassPanel title="Active Prescriptions" style={{ height: "460px", overflowY: "auto" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {patient.medications.map((med, i) => (
-                            <div
-                                key={i}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "12px",
-                                    border: `1px solid ${T.border}`,
-                                    borderRadius: "8px",
-                                    background: T.bgMain
-                                }}
-                            >
-                                {/* Pill Shape Visualization */}
-                                <div
-                                    style={{
-                                        width: "24px",
-                                        height: med.shape === "oval" ? "12px" : "24px",
-                                        borderRadius: med.shape === "oval" ? "12px" : "50%",
-                                        background: med.color,
-                                        border: "1px solid #ccc",
-                                        marginRight: "16px",
-                                        flexShrink: 0
-                                    }}
-                                />
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: "600", fontSize: "14px", color: T.textPrimary }}>
-                                        {med.name}
-                                    </div>
-                                    <div style={{ fontSize: "12px", color: T.textSecondary }}>
-                                        {med.dose} • {med.freq}
-                                    </div>
-                                </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {insights.map((finding, i) => (
+                            <div key={i} style={{
+                                display: "flex",
+                                gap: "12px",
+                                padding: "12px 14px",
+                                background: "#F0FDF4",
+                                borderLeft: `3px solid ${T.primary}`,
+                                borderRadius: "4px",
+                                fontSize: "14px",
+                                color: T.textPrimary,
+                                lineHeight: "1.5"
+                            }}>
+                                <span style={{ color: T.primary, fontWeight: "700", flexShrink: 0 }}>•</span>
+                                <span>{finding}</span>
                             </div>
                         ))}
                     </div>
                 </GlassPanel>
-            </div>
+            )}
 
-            {/* Bottom Row: Alerts and Placeholders */}
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "24px" }}>
-                {/* Alerts Feed */}
-                <GlassPanel title="Clinical Pattern Feed">
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {patient.alerts.map((alert) => (
-                            <div
-                                key={alert.id}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "12px",
-                                    padding: "12px",
-                                    background: alert.type === "danger" ? "rgba(239, 68, 68, 0.1)" : "rgba(245, 158, 11, 0.1)",
-                                    borderLeft: `4px solid ${alert.type === "danger" ? T.danger : T.warning}`,
-                                    borderRadius: "4px"
-                                }}
-                            >
-                                {alert.type === "danger" ? (
-                                    <FiAlertTriangle color={T.danger} size={18} />
-                                ) : (
-                                    <FiActivity color={T.warning} size={18} />
-                                )}
-                                <div style={{ flex: 1, fontSize: "14px", color: T.textPrimary }}>
-                                    {alert.message}
-                                </div>
-                                <div style={{ fontSize: "12px", color: T.textSecondary }}>
-                                    {alert.time}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </GlassPanel>
-
-                {/* Natural Language Query */}
+            {/* ── Section 4: Doctor Query Panels ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
                 <NLQuery patient={patient} />
-
-                {/* Second Opinion Mode */}
                 <SecondOpinion patient={patient} />
             </div>
+
         </div>
     );
 }
