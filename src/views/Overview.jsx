@@ -1,15 +1,35 @@
 import { useState } from "react";
-import { PATIENTS } from "../mockData";
 import PatientCard from "../components/PatientCard";
 import GlassPanel from "../components/GlassPanel";
 import { T } from "../tokens";
+import { parseClinicalText } from "../utils/aiParser";
 
-export default function Overview({ setActivePatient, goToPatient }) {
+export default function Overview({ patients, setPatients, setActivePatient, goToPatient }) {
     const [search, setSearch] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
 
-    const filteredPatients = PATIENTS.filter((p) =>
+    const filteredPatients = patients.filter((p) =>
         p.name.toLowerCase().includes(search.toLowerCase())
     );
+
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setIsUploading(true);
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            const newPatient = await parseClinicalText(text);
+
+            setPatients((prev) => [...prev, newPatient]);
+            setActivePatient(newPatient);
+            setIsUploading(false);
+            goToPatient();
+        };
+        reader.readAsText(file);
+    };
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -29,18 +49,27 @@ export default function Overview({ setActivePatient, goToPatient }) {
                         }}
                     />
 
-                    <button
+                    <label
                         style={{
-                            background: T.primary,
+                            background: isUploading ? T.textMuted : T.primary,
                             color: "white",
                             border: "none",
                             padding: "10px 16px",
                             borderRadius: "8px",
-                            cursor: "pointer"
+                            cursor: isUploading ? "not-allowed" : "pointer",
+                            display: "flex",
+                            alignItems: "center"
                         }}
                     >
-                        + Add Patient
-                    </button>
+                        {isUploading ? "Extracting AI Profile..." : "+ Upload Case Sheet"}
+                        <input
+                            type="file"
+                            accept=".txt"
+                            style={{ display: "none" }}
+                            onChange={handleFileUpload}
+                            disabled={isUploading}
+                        />
+                    </label>
                 </div>
             </GlassPanel>
 

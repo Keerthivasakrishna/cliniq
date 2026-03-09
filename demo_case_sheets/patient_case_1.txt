@@ -1,0 +1,16 @@
+Patient Name: Robert Downey
+Age: 63
+Diagnosis: Type 2 Diabetes, Hypertension
+
+Chief Complaint:
+Fatigue and blurred vision.
+
+Recent Labs:
+HbA1c: 8.4
+Creatinine: 1.5
+BP: 150/95
+
+Medications:
+Metformin 500mg twice daily
+Amlodipine 5mg once daily
+Atorvastatin 20mg once daily

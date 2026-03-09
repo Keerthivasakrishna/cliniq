@@ -7,7 +7,8 @@ import { T } from "./tokens";
 
 function App() {
   const [active, setActive] = useState("overview");
-  const [activePatient, setActivePatient] = useState(PATIENTS[0]);
+  const [patients, setPatients] = useState(() => PATIENTS.slice(0, 2));
+  const [activePatient, setActivePatient] = useState(patients[0]);
 
   return (
     <div
@@ -26,6 +27,8 @@ function App() {
       <div style={{ flex: 1, padding: "40px" }}>
         {active === "overview" && (
           <Overview
+            patients={patients}
+            setPatients={setPatients}
             setActivePatient={setActivePatient}
             goToPatient={() => setActive("patient")}
           />

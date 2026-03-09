@@ -1,0 +1,16 @@
+Patient Name: Michael Scott
+Age: 47
+Diagnosis: Rheumatoid Arthritis
+
+Chief Complaint:
+Joint pain and stiffness.
+
+Recent Labs:
+CRP: Elevated
+ESR: 40
+Hemoglobin: 10.5
+
+Medications:
+Methotrexate 10mg weekly
+Folic Acid 5mg daily
+Prednisone 5mg

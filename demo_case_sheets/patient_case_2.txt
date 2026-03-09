@@ -1,0 +1,16 @@
+Patient Name: Sarah Connor
+Age: 52
+Diagnosis: Chronic Kidney Disease Stage 2
+
+Chief Complaint:
+Swelling in legs and fatigue.
+
+Recent Labs:
+Creatinine: 1.8
+BP: 148/90
+HbA1c: 6.2
+
+Medications:
+Losartan 50mg
+Furosemide 20mg
+Amlodipine 5mg
