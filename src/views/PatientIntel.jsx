@@ -3,6 +3,7 @@ import { T } from "../tokens";
 import GlassPanel from "../components/GlassPanel";
 import BodyMap from "../components/BodyMap";
 import NLQuery from "../components/NLQuery";
+import SecondOpinion from "../components/SecondOpinion";
 import {
     LineChart,
     Line,
@@ -233,25 +234,7 @@ export default function PatientIntel({ patient }) {
                 <NLQuery patient={patient} />
 
                 {/* Second Opinion Mode */}
-                <GlassPanel
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "12px",
-                        background: `linear-gradient(135deg, #EFF6FF, ${T.bgCard})`,
-                        cursor: "pointer"
-                    }}
-                >
-                    <div style={{ padding: "16px", background: "#fff", borderRadius: "50%", color: "#3B82F6" }}>
-                        <FiMessageSquare size={24} />
-                    </div>
-                    <div style={{ fontWeight: "600", color: T.textPrimary }}>Second Opinion Mode</div>
-                    <div style={{ fontSize: "12px", color: T.textSecondary, textAlign: "center" }}>
-                        Consult medical guidelines & literature
-                    </div>
-                </GlassPanel>
+                <SecondOpinion patient={patient} />
             </div>
         </div>
     );

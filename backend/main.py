@@ -108,6 +108,70 @@ Provide a concise, evidence-based clinical answer in 2–3 sentences. Reference 
     return {"answer": response.text.strip()}
 
 
+class SecondOpinionRequest(BaseModel):
+    hypothesis: str
+    patient: dict
+
+
+@app.post("/second_opinion")
+async def second_opinion(data: SecondOpinionRequest):
+    """
+    AI Second Opinion Mode:
+    Doctor proposes a diagnosis → Gemini cross-checks against patient data.
+    Returns a structured verdict (CORROBORATED / NOT SUPPORTED / PARTIAL)
+    with reasoning and evidence bullet points.
+    """
+    print(f"\n[AGENT] Second Opinion requested: '{data.hypothesis}'")
+
+    patient_summary = json.dumps(data.patient, indent=2)
+
+    prompt = f"""You are a clinical decision support AI acting as a second opinion consultant.
+
+A doctor has proposed the following diagnosis hypothesis for their patient:
+Hypothesis: "{data.hypothesis}"
+
+Patient Data:
+{patient_summary}
+
+Your task:
+1. Evaluate whether the patient data supports, contradicts, or partially supports this hypothesis.
+2. Provide a verdict: CORROBORATED, NOT SUPPORTED, or PARTIAL
+3. List up to 4 specific evidence points from the patient data (lab values, diagnoses, symptoms).
+4. Write a 2-sentence clinical reasoning summary.
+
+Return ONLY valid JSON in this exact format:
+{{
+  "verdict": "CORROBORATED",
+  "reasoning": "2 sentence clinical summary here.",
+  "evidence": [
+    "Evidence point 1 with specific value",
+    "Evidence point 2 with specific value"
+  ]
+}}"""
+
+    response = gemini_model.generate_content(prompt)
+
+    # Parse JSON from response
+    import re as _re
+    raw = response.text.strip()
+    cleaned = _re.sub(r"```(?:json)?", "", raw).replace("```", "").strip()
+    try:
+        result = json.loads(cleaned)
+    except json.JSONDecodeError:
+        match = _re.search(r"\{.*\}", cleaned, _re.DOTALL)
+        try:
+            result = json.loads(match.group()) if match else {}
+        except Exception:
+            result = {}
+
+    result.setdefault("verdict", "UNKNOWN")
+    result.setdefault("reasoning", "Unable to evaluate hypothesis with available data.")
+    result.setdefault("evidence", [])
+
+    print(f"[AGENT] Second Opinion verdict: {result.get('verdict')}")
+    return result
+
+
 @app.get("/")
 def root():
     return {
